@@ -1,0 +1,41 @@
+{
+  "expo": {
+    "name": "AgroPulse",
+    "slug": "agropulse-mobile",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "scheme": "agropulse",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "supportsTablet": false,
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "AgroPulse necesita acceder a tu ubicación para verificar si estás dentro del lote agrícola."
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#1B4D3E"
+      },
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION"
+      ]
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "single"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "AgroPulse requiere tu GPS para detectar si te encuentras dentro de un lote productivo."
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}

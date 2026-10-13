@@ -1,0 +1,81 @@
+version: '3.8'
+
+services:
+  # ----------------------------------------------------------------------------
+  # 1. BROKER REDPANDA (KAFKA API COMPATIBLE) (§01, §10, §11)
+  # ----------------------------------------------------------------------------
+  redpanda:
+    image: docker.redpanda.com/redpandadata/redpanda:v24.1.2
+    container_name: agropulse-redpanda
+    command:
+      - redpanda start
+      - --smp 1
+      - --memory 512M
+      - --overprovisioned
+      - --kafka-addr internal://0.0.0.0:9092,external://0.0.0.0:19092
+      - --advertise-kafka-addr internal://redpanda:9092,external://localhost:19092
+      - --pandaproxy-addr 0.0.0.0:8082
+      - --advertise-pandaproxy-addr localhost:8082
+      - --schema-registry-addr 0.0.0.0:8081
+    ports:
+      - "19092:19092"
+      - "9092:9092"
+      - "8081:8081"
+      - "8082:8082"
+    volumes:
+      - redpanda-data:/var/lib/redpanda/data
+    healthcheck:
+      test: ["CMD-SHELL", "rpk cluster health | grep -i healthy"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ----------------------------------------------------------------------------
+  # 2. REDPANDA CONSOLE (VISUALIZADOR WEB DE TOPICS Y MENSAJES)
+  # ----------------------------------------------------------------------------
+  console:
+    image: docker.redpanda.com/redpandadata/console:latest
+    container_name: agropulse-console
+    ports:
+      - "8080:8080"
+    environment:
+      KAFKA_BROKERS: "redpanda:9092"
+    depends_on:
+      - redpanda
+
+  # ----------------------------------------------------------------------------
+  # 3. WORKER CONSUMER (STREAMING -> SUPABASE SQL + EJECUTOR DE VÁLVULAS)
+  # ----------------------------------------------------------------------------
+  worker:
+    build:
+      context: ..
+      dockerfile: infra/worker/Dockerfile
+    container_name: agropulse-worker
+    environment:
+      KAFKA_BROKERS: "redpanda:9092"
+      SUPABASE_URL: ${SUPABASE_URL:-https://iwjkpmmwjvnthgiepzyt.supabase.co}
+      SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY}
+    depends_on:
+      redpanda:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # ----------------------------------------------------------------------------
+  # 4. SIMULADOR IoT (PRODUCTOR DE TICKS TELEMÉTRICOS CADA 3-8s)
+  # ----------------------------------------------------------------------------
+  simulator:
+    build:
+      context: ..
+      dockerfile: infra/simulator/Dockerfile
+    container_name: agropulse-simulator
+    environment:
+      KAFKA_BROKERS: "redpanda:9092"
+      SUPABASE_URL: ${SUPABASE_URL:-https://iwjkpmmwjvnthgiepzyt.supabase.co}
+      SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY}
+    depends_on:
+      redpanda:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  redpanda-data:

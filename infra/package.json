@@ -1,0 +1,18 @@
+{
+  "name": "agropulse-infra-services",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "worker": "ts-node worker/worker.ts",
+    "simulator": "ts-node simulator/simulator.ts"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.49.1",
+    "kafkajs": "^2.2.4"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.0",
+    "ts-node": "^10.9.2",
+    "typescript": "~6.0.3"
+  }
+}
